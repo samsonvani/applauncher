@@ -9,11 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 
 class AppListAdapter(
     private val apps: List<AppInfo>,
-    initialSelected: Set<String>,
-    private val onSelectionChanged: (Set<String>) -> Unit
+    private val selected: Set<String>,
+    private val onToggle: (packageName: String, isChecked: Boolean) -> Unit
 ) : RecyclerView.Adapter<AppListAdapter.ViewHolder>() {
-
-    private val selected = initialSelected.toMutableSet()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val checkBox: CheckBox = view.findViewById(R.id.checkBox)
@@ -31,12 +29,22 @@ class AppListAdapter(
         val app = apps[position]
         holder.label.text = app.label
         holder.pkg.text = app.packageName
+
+        // Только устанавливаем состояние — без слушателя.
+        // Слушатель ставится на всю строку ниже и пересоздаётся каждый биндинг.
         holder.checkBox.isChecked = selected.contains(app.packageName)
 
-        holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) selected.add(app.packageName)
-            else selected.remove(app.packageName)
-            onSelectionChanged(selected)
+        // Вешаем клик на всю строку: тап где угодно = переключение
+        holder.itemView.setOnClickListener {
+            // Читаем актуальное состояние из selected, а не из View
+            val currentlySelected = selected.contains(app.packageName)
+            val newState = !currentlySelected
+
+            // Обновляем визуально
+            holder.checkBox.isChecked = newState
+
+            // Сообщаем наружу — там обновят selected и вызовут нужные notify
+            onToggle(app.packageName, newState)
         }
     }
 
