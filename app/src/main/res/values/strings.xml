@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">App Launcher</string>
-    <string name="hint_delay">Задержка между запусками (сек)</string>
+    <string name="hint_delay">Задержка (сек)</string>
     <string name="btn_save">Сохранить</string>
     <string name="btn_launch_now">Запустить сейчас</string>
-    <string name="label_apps">Выберите приложения для запуска:</string>
+    <string name="btn_overlay">Разрешение «Поверх других приложений»</string>
+    <string name="btn_remove">Удалить из списка</string>
+    <string name="tab_selected">Выбранные (0)</string>
+    <string name="tab_all">Все приложения</string>
 </resources>
