@@ -1,21 +1,25 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.applauncher">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Разрешение на получение сигнала о загрузке -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
-    <!-- Для Android 10+ (фоновый запуск активности) может потребоваться
-         хотя бы одно из разрешений: -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission"
+        xmlns:tools="http://schemas.android.com/tools" />
 
     <application
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="App Launcher"
-        android:theme="@style/Theme.AppCompat.Light">
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppLauncher">
 
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,19 +27,24 @@
             </intent-filter>
         </activity>
 
-        <!-- Приёмник сигнала BOOT_COMPLETED -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
 
-        <!-- Сервис для последовательного запуска с задержкой -->
         <service
             android:name=".LaunchService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Launches user-selected apps with delay" />
+        </service>
     </application>
 </manifest>
