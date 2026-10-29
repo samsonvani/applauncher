@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">App Launcher</string>
+    <string name="hint_delay">Задержка (сек)</string>
+    <string name="btn_save">Сохранить</string>
+    <string name="btn_launch_now">Запустить сейчас</string>
+    <string name="toast_delay_saved">Задержка сохранена</string>
+    <string name="toast_empty_list">Список приложений пуст</string>
+</resources>
