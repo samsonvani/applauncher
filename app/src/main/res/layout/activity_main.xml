@@ -1,60 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="12dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/hint_delay"
-        android:textStyle="bold"
-        android:textSize="16sp" />
-
-    <EditText
-        android:id="@+id/delayEdit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_delay"
-        android:inputType="number"
-        android:maxLength="5"
-        android:layout_marginBottom="8dp" />
-
+    <!-- Блок настроек задержки -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-        <Button
-            android:id="@+id/saveButton"
+        <EditText
+            android:id="@+id/delayEdit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:hint="@string/hint_delay"
+            android:inputType="number"
+            android:maxLength="5"
+            android:importantForAutofill="no" />
+
+        <Button
+            android:id="@+id/saveDelayButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:text="@string/btn_save" />
-
-        <Button
-            android:id="@+id/launchNowButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/btn_launch_now"
-            android:layout_marginStart="8dp" />
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Кнопка разрешения «Поверх других приложений» -->
+    <Button
+        android:id="@+id/overlayButton"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/label_apps"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginTop="8dp"
+        android:text="@string/btn_overlay" />
 
+    <!-- Кнопка «Запустить сейчас» -->
+    <Button
+        android:id="@+id/launchNowButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/btn_launch_now" />
+
+    <!-- Две вкладки -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill" />
+
+    <!-- Список выбранных приложений -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/selectedAppsRecycler"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipToPadding="false" />
+
+    <!-- Список всех приложений -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/allAppsRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone"
         android:clipToPadding="false" />
 </LinearLayout>
