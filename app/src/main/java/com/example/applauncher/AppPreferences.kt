@@ -15,11 +15,6 @@ object AppPreferences {
     private const val KEY_DELAY_MS = "launch_delay_ms"
     private const val KEY_LAST_LAUNCH_ELAPSED = "last_launch_elapsed"
 
-    /**
-     * Возвращает context с device-protected storage, если API позволяет.
-     * На Android 7+ (API 24+) это работает всегда — но на всякий случай
-     * оставляем проверку версии.
-     */
     private fun storageContext(context: Context): Context =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             context.createDeviceProtectedStorageContext()
@@ -64,32 +59,41 @@ object AppPreferences {
     // -------- Миграция из старого credential-protected хранилища --------
 
     /**
-     * Пользователи, у которых уже были настройки в обычном (credential) хранилище,
-     * после обновления увидят пустые списки, потому что настройки теперь лежат
-     * в device-protected storage. Эта функция копирует старые значения.
-     *
-     * Вызывается из MainActivity.onCreate — то есть только при наличии уже
-     * разблокированного устройства.
+     * Копирует настройки из обычного (credential-protected) хранилища
+     * в device-protected. Вызывается из MainActivity.onCreate — то есть
+     * только когда устройство уже разблокировано.
      */
-    @Suppress("UNCHECKED_CAST")
     fun migrateIfNeeded(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
 
         val deviceProtected = context.createDeviceProtectedStorageContext()
         val devicePrefs = deviceProtected.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-        // Если в device-protected уже что-то есть — значит, миграция не нужна
+        // Если в device-protected уже что-то есть — миграция не нужна
         if (devicePrefs.all.isNotEmpty()) return
 
         val credentialPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (credentialPrefs.all.isEmpty()) return
 
-        // Копируем все значения
-        devicePrefs.edit()
-            .putAll(credentialPrefs.all as Map<String, Any?>)
-            .apply()
+        // Явная копия по типам — обходит проблемы с Editor.putAll(Map<String, *>)
+        // в некоторых версиях Kotlin/AGP
+        val editor = devicePrefs.edit()
+        for ((key, value) in credentialPrefs.all) {
+            when (value) {
+                is String -> editor.putString(key, value)
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Float -> editor.putFloat(key, value)
+                is Boolean -> editor.putBoolean(key, value)
+                is Set<*> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    editor.putStringSet(key, value as Set<String>)
+                }
+            }
+        }
+        editor.apply()
 
-        // Опционально: старые данные можно почистить
+        // Старые данные больше не нужны
         credentialPrefs.edit().clear().apply()
     }
 }
