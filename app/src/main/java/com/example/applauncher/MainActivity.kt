@@ -32,6 +32,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+         // Миграция старых настроек в device-protected storage
+        AppPreferences.migrateIfNeeded(this)
+
         delayEdit = findViewById(R.id.delayEdit)
         tabLayout = findViewById(R.id.tabLayout)
         allRecycler = findViewById(R.id.allAppsRecycler)
