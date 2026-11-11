@@ -2,7 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Стандартное разрешение на BOOT_COMPLETED -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Вендорное разрешение (HTC / OEM) — как в ru.fmplay -->
+    <uses-permission android:name="android.permission.QUICKBOOT_POWERON" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -28,7 +33,15 @@
             </intent-filter>
         </activity>
 
-        <!-- directBootAware=true позволит получить сигнал до разблокировки -->
+        <!--
+            Receiver по образцу ru.fmplay:
+            - BOOT_COMPLETED (стандарт)
+            - QUICKBOOT_POWERON (HTC / некоторые OEM-ГУ)
+            - com.htc.intent.action.QUICKBOOT_POWERON (HTC)
+            - плюс MTK / FYT-специфика автомобильных ГУ
+            - плюс LOCKED_BOOT_COMPLETED (direct boot)
+            - плюс MY_PACKAGE_REPLACED (после обновления)
+        -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -38,7 +51,13 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+
+                <!-- Специфика автомобильных ГУ (FYT / MTK) -->
+                <action android:name="com.fyt.boot.ACCON" />
+                <action android:name="android.intent.action.ACTION_MT_COMMAND_SLEEP_OUT" />
+                <action android:name="android.intent.action.ACTION_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
