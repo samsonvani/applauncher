@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.tabs.TabLayout
 
 class MainActivity : AppCompatActivity() {
@@ -27,22 +28,25 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
     private lateinit var allRecycler: RecyclerView
     private lateinit var selectedRecycler: RecyclerView
+    private lateinit var switchLaunchOnOpen: SwitchMaterial
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-         // Миграция старых настроек в device-protected storage
+        // Миграция старых настроек в device-protected storage
         AppPreferences.migrateIfNeeded(this)
 
         delayEdit = findViewById(R.id.delayEdit)
         tabLayout = findViewById(R.id.tabLayout)
         allRecycler = findViewById(R.id.allAppsRecycler)
         selectedRecycler = findViewById(R.id.selectedAppsRecycler)
+        switchLaunchOnOpen = findViewById(R.id.switchLaunchOnOpen)
 
         // Восстанавливаем сохранённое
         selectedPackages.addAll(AppPreferences.loadPackages(this))
         delayEdit.setText((AppPreferences.loadDelay(this) / 1000).toString())
+        switchLaunchOnOpen.isChecked = AppPreferences.isLaunchOnOpen(this)
 
         // Список установленных приложений с launcher-интентом
         val pm = packageManager
@@ -117,13 +121,35 @@ class MainActivity : AppCompatActivity() {
             }
             startLaunchService()
         }
+
+        // Переключатель «Запускать при открытии»
+        switchLaunchOnOpen.setOnCheckedChangeListener { _, isChecked ->
+            AppPreferences.saveLaunchOnOpen(this, isChecked)
+            Toast.makeText(
+                this,
+                if (isChecked) "Автозапуск при открытии включён"
+                else "Автозапуск при открытии выключен",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        // Если опция включена и есть выбранные приложения — запускаем после отрисовки UI
+        if (AppPreferences.isLaunchOnOpen(this) && selectedPackages.isNotEmpty()) {
+            window.decorView.postDelayed({
+                if (!isFinishing && selectedPackages.isNotEmpty()) {
+                    if (hasOverlayPermission()) {
+                        startLaunchService()
+                    }
+                }
+            }, 500)
+        }
     }
 
     override fun onResume() {
         super.onResume()
         // Обновляем заголовок таба после возврата из настроек
         updateSelectedTabTitle()
-        // Если разрешение только что выдано — можно сразу подсказать
+        // Если разрешение не выдано — подсказываем
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasOverlayPermission()) {
             Toast.makeText(
                 this,
@@ -155,7 +181,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "На этой версии Android разрешение не требуется", Toast.LENGTH_SHORT).show()
             return
         }
-        // Пытаемся открыть страницу именно нашего приложения
         val specific = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             Uri.parse("package:$packageName")
@@ -163,7 +188,6 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(specific)
         } catch (_: Exception) {
-            // Фолбэк — общий экран «Поверх других приложений»
             try {
                 startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
             } catch (_: Exception) {
