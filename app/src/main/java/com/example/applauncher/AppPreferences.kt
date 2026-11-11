@@ -14,6 +14,7 @@ object AppPreferences {
     private const val KEY_PACKAGES = "selected_packages"
     private const val KEY_DELAY_MS = "launch_delay_ms"
     private const val KEY_LAST_LAUNCH_ELAPSED = "last_launch_elapsed"
+    private const val KEY_LAUNCH_ON_OPEN = "launch_on_open"
 
     private fun storageContext(context: Context): Context =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -56,6 +57,15 @@ object AppPreferences {
     fun loadLastLaunchElapsed(context: Context): Long =
         prefs(context).getLong(KEY_LAST_LAUNCH_ELAPSED, -1L)
 
+    // -------- Запуск при открытии приложения --------
+
+    fun saveLaunchOnOpen(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_LAUNCH_ON_OPEN, enabled).apply()
+    }
+
+    fun isLaunchOnOpen(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_LAUNCH_ON_OPEN, false)
+
     // -------- Миграция из старого credential-protected хранилища --------
 
     /**
@@ -76,7 +86,6 @@ object AppPreferences {
         if (credentialPrefs.all.isEmpty()) return
 
         // Явная копия по типам — обходит проблемы с Editor.putAll(Map<String, *>)
-        // в некоторых версиях Kotlin/AGP
         val editor = devicePrefs.edit()
         for ((key, value) in credentialPrefs.all) {
             when (value) {
