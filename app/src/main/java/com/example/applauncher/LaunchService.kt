@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Handler
@@ -12,6 +11,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 
 class LaunchService : Service() {
@@ -22,12 +22,17 @@ class LaunchService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Логируем причину запуска (boot_action / manual)
+        val bootAction = intent?.getStringExtra("boot_action") ?: "manual"
+        Log.i(TAG, "onStartCommand, trigger = $bootAction")
+
         // Защита от повторного запуска, пока сервис уже выполняется
         if (isRunning) return START_NOT_STICKY
 
         // Защита от двойного срабатывания после LOCKED_BOOT_COMPLETED + BOOT_COMPLETED.
         // Если сервис уже отрабатывал в этом же boot — не запускаем повторно.
         if (shouldSkipAsDuplicate()) {
+            Log.i(TAG, "Skipping as duplicate launch in this boot")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -38,8 +43,7 @@ class LaunchService : Service() {
         // приложений из фона на Android 10+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
             !Settings.canDrawOverlays(this)) {
-            // На LOCKED_BOOT тост может не показаться на экране блокировки,
-            // но код не упадёт. Пользователь увидит предупреждение после разблокировки.
+            Log.w(TAG, "No overlay permission, aborting")
             try {
                 Toast.makeText(
                     this,
@@ -73,7 +77,10 @@ class LaunchService : Service() {
         val packages = AppPreferences.loadPackages(this)
         val delayMs = AppPreferences.loadDelay(this)
 
+        Log.i(TAG, "Packages to launch: ${packages.size}, delay: ${delayMs}ms")
+
         if (packages.isEmpty()) {
+            Log.w(TAG, "Package list is empty, stopping")
             try {
                 Toast.makeText(this, "Список приложений пуст", Toast.LENGTH_SHORT).show()
             } catch (_: Exception) { /* игнорируем */ }
@@ -112,18 +119,27 @@ class LaunchService : Service() {
 
         fun launchNext() {
             if (index >= packages.size) {
+                Log.i(TAG, "All packages launched, stopping service")
                 stopSelf()
                 return
             }
             val packageName = packages[index]
             index++
 
+            // Получаем launch-intent и явно указываем компонент —
+            // это помогает обходить блокировки Android 11+
             val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
             if (launchIntent != null) {
+                val component = launchIntent.component
+                if (component != null) {
+                    launchIntent.setComponent(component)
+                }
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                Log.d(TAG, "Launching: $packageName")
                 try {
                     startActivity(launchIntent)
                 } catch (e: Exception) {
+                    Log.e(TAG, "Failed to launch $packageName", e)
                     try {
                         Toast.makeText(
                             this@LaunchService,
@@ -132,6 +148,8 @@ class LaunchService : Service() {
                         ).show()
                     } catch (_: Exception) { /* игнорируем */ }
                 }
+            } else {
+                Log.w(TAG, "No launch intent for $packageName")
             }
             handler.postDelayed({ launchNext() }, delayMs)
         }
@@ -158,6 +176,7 @@ class LaunchService : Service() {
     }
 
     companion object {
+        private const val TAG = "LaunchService"
         private const val CHANNEL_ID = "launch_channel"
         private const val NOTIFICATION_ID = 1
         private const val DUPLICATE_WINDOW_MS = 5 * 60 * 1000L  // 5 минут
