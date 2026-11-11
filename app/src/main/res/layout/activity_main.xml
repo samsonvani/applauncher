@@ -47,6 +47,14 @@
         android:layout_marginTop="4dp"
         android:text="@string/btn_launch_now" />
 
+    <!-- Переключатель «Запускать при открытии приложения» -->
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switchLaunchOnOpen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Запускать выбранные приложения при открытии App Launcher" />
+
     <!-- Две вкладки -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
